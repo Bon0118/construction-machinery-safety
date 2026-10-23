@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "alarm_probability", "verdict_confidence", "evidence_quality", "observations", "reason_codes", "summary", "needs_manual_review"],
+  "properties": {
+    "verdict": {"type": "string", "enum": ["confirmed", "rejected", "uncertain"]},
+    "alarm_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "verdict_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "evidence_quality": {"type": "string", "enum": ["high", "medium", "low"]},
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["person_visible", "target_visible", "same_person", "phone_position", "attention_to_phone", "active_use", "keyframe_consistency"],
+      "properties": {
+        "person_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "target_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "same_person": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "phone_position": {"type": "string", "enum": ["in_front", "behind_back", "at_side", "at_ear", "other", "unclear"]},
+        "attention_to_phone": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "active_use": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "keyframe_consistency": {"type": "string", "enum": ["consistent", "contradictory", "unclear"]}
+      }
+    },
+    "reason_codes": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "string"},
+    "needs_manual_review": {"type": "boolean"}
+  }
+}

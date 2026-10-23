@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "target_id",
+    "verdict",
+    "alarm_probability",
+    "verdict_confidence",
+    "evidence_quality",
+    "observations",
+    "reason_codes",
+    "summary",
+    "needs_manual_review"
+  ],
+  "properties": {
+    "target_id": {"type": "string"},
+    "verdict": {
+      "type": "string",
+      "enum": ["confirmed", "rejected", "uncertain"]
+    },
+    "alarm_probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "verdict_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_quality": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visible_head_features",
+        "evidence_frames",
+        "person_visible",
+        "head_visible",
+        "headgear_type",
+        "hard_shell_visible",
+        "helmet_outline_visible",
+        "multi_frame_consistent",
+        "image_quality"
+      ],
+      "properties": {
+        "visible_head_features": {"type": "array", "maxItems": 6, "items": {"type": "string", "enum": ["hair_structure", "scalp_contour", "fabric_cap", "soft_hat_brim", "rigid_shell", "helmet_outline"]}},
+        "evidence_frames": {"type": "array", "maxItems": 5, "items": {"type": "string", "enum": ["T1", "T2", "T3", "T4", "T5"]}},
+        "person_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "head_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "headgear_type": {
+          "type": "string",
+          "enum": ["safety_helmet", "ordinary_hat", "bare_head", "unclear"]
+        },
+        "hard_shell_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "helmet_outline_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "multi_frame_consistent": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "image_quality": {"type": "string"}
+      }
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "summary": {"type": "string"},
+    "needs_manual_review": {"type": "boolean"}
+  }
+}

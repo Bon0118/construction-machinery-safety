@@ -1,0 +1,200 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "alarm_probability",
+    "verdict_confidence",
+    "evidence_quality",
+    "observations",
+    "reason_codes",
+    "summary",
+    "needs_manual_review"
+  ],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "rejected",
+        "uncertain"
+      ]
+    },
+    "alarm_probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "verdict_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_quality": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "person_visible",
+        "target_visible",
+        "person_role",
+        "cab_visible",
+        "person_inside_cab",
+        "cab_belongs_to_crane",
+        "riding_two_wheeler",
+        "spatial_relation",
+        "motion_evidence",
+        "physical_barrier",
+        "keyframe_consistency",
+        "image_quality",
+        "candidate_index",
+        "crane_class_match",
+        "boom_visible",
+        "same_physical_space",
+        "crane_state",
+        "boom_person_relation",
+        "review_pair_id",
+        "boom_belongs_to_crane"
+      ],
+      "properties": {
+        "person_visible": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "target_visible": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "person_role": {
+          "type": "string",
+          "enum": [
+            "pedestrian",
+            "operator_in_cab",
+            "no_person",
+            "unclear"
+          ]
+        },
+        "cab_visible": {
+          "type": "string",
+          "enum": ["yes", "no", "unclear"]
+        },
+        "person_inside_cab": {
+          "type": "string",
+          "enum": ["yes", "no", "unclear"]
+        },
+        "cab_belongs_to_crane": {
+          "type": "string",
+          "enum": ["yes", "no", "unclear"]
+        },
+        "riding_two_wheeler": {
+          "type": "string",
+          "enum": ["yes", "no", "unclear"]
+        },
+        "spatial_relation": {
+          "type": "string"
+        },
+        "motion_evidence": {
+          "type": "string"
+        },
+        "physical_barrier": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "keyframe_consistency": {
+          "type": "string"
+        },
+        "image_quality": {
+          "type": "string"
+        },
+        "candidate_index": {
+          "type": "integer",
+          "minimum": -1,
+          "maximum": 2
+        },
+        "crane_class_match": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "boom_visible": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "same_physical_space": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "crane_state": {
+          "type": "string",
+          "enum": [
+            "deployed",
+            "stowed_or_transport",
+            "unclear"
+          ]
+        },
+        "boom_person_relation": {
+          "type": "string",
+          "enum": [
+            "under_boom",
+            "near_boom",
+            "outside",
+            "unclear"
+          ]
+        },
+        "review_pair_id": {
+          "type": "string"
+        },
+        "boom_belongs_to_crane": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        }
+      }
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "needs_manual_review": {
+      "type": "boolean"
+    }
+  }
+}

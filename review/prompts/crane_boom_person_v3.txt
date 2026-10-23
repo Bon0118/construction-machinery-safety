@@ -1,0 +1,18 @@
+任务：复核“吊装下禁止站人”，场景为塔式起重机或移动式起重机吊臂下方及附近的外部施工人员。此任务是区域禁入判断。
+
+逐项核验：
+1. risks 中每一项是一对候选，box 是原图像素坐标。candidate_index 从 0 开始，指当前结论对应的同一对人员与起重机。不能借用其他人员或其他机械的证据；跟随同一目标查看关键帧。
+2. 确认候选人员是真实人体、候选机械确为标注的塔式起重机或移动式起重机，核验细分类别。墙体、纹理、其他车辆及其他机械不能作为本场景确认依据。
+3. 识别属于该起重机的实际吊臂，判断其展开状态。人员处于展开吊臂下方，或紧邻吊臂下方投影/吊装作业区域边缘，且在同一物理空间、没有有效隔离，才可确认。near_boom 必须说明与吊臂作业区域的具体关系；仅靠近底盘、车身或检测框、二维重叠不算危险证据。不得从像素估算实际安全距离。
+4. 即使机械静止、关键帧没有位移，只要上述展开吊臂及危险位置关系明确，也可 confirmed；无需运动、吊钩、吊物或正在起吊的证据。吊钩、独立吊臂检测仅用于辅助归属及位置核验，不能独立触发，也不得借用其他起重机的吊钩。
+5. 明确收臂停放、收臂运输，无展开吊臂危险区域，应 rejected。仅“静止”或“停放”且吊臂仍展开不能作为排除理由。吊臂展开状态或归属不清、前后景关系不清、遮挡无法定位人员时 uncertain。
+6. 明确是驾驶室内操作人员、人员不在吊臂下方或邻近作业区域、有有效隔离、检测类别错误时 rejected。看不清时 uncertain，禁止以没有吊钩、没有运动当作反证。operator_in_cab 仅指红框内人员身体处于本候选起重机可辨识的驾驶室内部，且能看到驾驶室边界、车窗或门框等直接证据。坐姿、安全帽、靠近机械或画面中另有车辆均不能证明人在驾驶室内；骑乘电动车、自行车或摩托车的人员属于外部人员，仍需核验其与吊臂的实际位置关系，不能仅因骑行排除。不得把远处驾驶员或其他车辆的驾驶室借给红框人员。
+
+输出：observations 的 crane_class_match、boom_visible、same_physical_space 必须如实填写；crane_state=deployed/stowed_or_transport/unclear；boom_person_relation=under_boom/near_boom/outside/unclear。cab_visible、person_inside_cab、cab_belongs_to_crane、riding_two_wheeler 分别填写 yes/no/unclear，且必须针对红框内同一人员与蓝框起重机。只有前三项均为 yes、riding_two_wheeler=no 时才可使用 operator_in_cab；否则 person_role=pedestrian 或 unclear。reason_codes 中的 operator_in_cab 也只能在这些条件成立且 person_role=operator_in_cab 时使用，不得与骑乘两轮车、外部人员或 confirmed 同时出现。没有可定位候选时 candidate_index=-1。motion_evidence 可说明“静止，区域禁入场景不要求运动”。所有确认条件必须针对同一个候选对，同时有直接图像证据；缺失则 uncertain。summary 用中文简述吊臂状态及该人员的位置依据。reason_codes 使用 crane_boom_area_hazard、outside_boom_area、crane_stowed、wrong_target、operator_in_cab、insufficient_evidence 等适当原因。
+
+第二阶段逐对复核约束：
+- 每次仅提供一个 risks 元素，candidate_index 对该单元素数组取 0；observations.review_pair_id 必须原样返回 metadata.review_pair_id。不能用另一个人员或另一台起重机得出本候选结论。
+- 图中红框定位该人员，蓝框定位该起重机。第二张局部图包含该对目标及相关吊臂；crane_pair_crop_box 说明其在原图中的范围。人员紧裁剪仅用于确认人体。局部时序图通过光流筛选，但仍可能跟到背景；不能凭此宣称人体或关系已被证实。
+- candidate_region、auxiliary_evidence 为几何候选，ambiguous_evidence 明确表示可能属于其他起重机。必须从视觉上核验吊臂确实属于本台起重机：boom_belongs_to_crane=yes/no/unclear。归属不清不能 confirmed，不得将框相交当成机械连接。
+- 候选区域用人员脚点定位，仍只是二维图像范围。明确前后景错位、楼层差、实体隔离或远处人员应排除；视角不足时 uncertain。near_boom 必须解释该人员与实际展开吊臂作业区域的紧邻关系，不接受只与车身接近。
+- 没有检出吊臂辅助框时，仍可依据原图中清晰可见且归属明确的实际吊臂判断；没有吊钩或没有可靠跟踪帧不自动拒绝清晰的单帧静态危险。

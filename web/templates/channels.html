@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>视频通道 · 工程机械伤害检测平台</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v=20260818-channel-traffic2">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <strong>智能检测平台</strong>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="主导航">
+        <a class="nav-item active" href="/channels">
+          <span class="nav-icon">▦</span>
+          <span>视频通道</span>
+        </a>
+        <a class="nav-item" href="/tasks">
+          <span class="nav-icon">▶</span>
+          <span>视频任务</span>
+        </a>
+        <a class="nav-item" href="/preview">
+          <span class="nav-icon">▣</span>
+          <span>实时预览</span>
+        </a>
+        <a class="nav-item" href="/alarms">
+          <span class="nav-icon">!</span>
+          <span>视频告警</span>
+        </a>
+        <a class="nav-item" href="/manual-reviews">
+          <span class="nav-icon">审</span>
+          <span>人工复核</span>
+        </a>
+        <a class="nav-item" href="/training"><span class="nav-icon">训</span><span>模型训练</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot online"></span>
+        <span>Web 服务运行中</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">VIDEO MANAGEMENT</p>
+          <h1>视频通道</h1>
+        </div>
+        <button class="button primary" id="add-channel-button" type="button">
+          <span>＋</span> 新增通道
+        </button>
+      </header>
+
+      <section class="summary-grid" aria-label="视频通道统计">
+        <article class="summary-card">
+          <span class="summary-label">通道总数</span>
+          <strong id="summary-total">0</strong>
+          <span class="summary-note">已保存视频源</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">已启用</span>
+          <strong id="summary-enabled">0</strong>
+          <span class="summary-note success-text">可创建检测任务</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">cameraIndexCode</span>
+          <strong id="summary-camera-code">0</strong>
+          <span class="summary-note">支持重新解析与重连</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">最近在线</span>
+          <strong id="summary-online">0</strong>
+          <span class="summary-note">以最近一次测试为准</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">共享流实时码率</span>
+          <strong id="summary-bitrate">0 Kbps</strong>
+          <span class="summary-note" id="summary-traffic">预计全天 0 GB</span>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>通道列表</h2>
+            <p>管理 cameraIndexCode、RTSP 和本地视频文件</p>
+          </div>
+          <div class="panel-actions">
+            <label class="search-box">
+              <span>⌕</span>
+              <input id="channel-search" type="search" placeholder="搜索名称、编号或 CameraID">
+            </label>
+            <button class="button secondary" id="refresh-button" type="button">刷新</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>通道名称</th>
+                <th>视频源类型</th>
+                <th>码流与流量</th>
+                <th>视频源</th>
+                <th>CameraID</th>
+                <th>连接状态</th>
+                <th>启用</th>
+                <th class="actions-column">操作</th>
+              </tr>
+            </thead>
+            <tbody id="channel-table-body">
+              <tr><td class="loading-cell" colspan="8">正在加载视频通道…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state hidden" id="empty-state">
+          <div class="empty-icon">▦</div>
+          <h3>暂无视频通道</h3>
+          <p>新增 cameraIndexCode、RTSP 或本地视频文件。</p>
+          <button class="button primary" id="empty-add-button" type="button">新增第一个通道</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="channel-modal" role="dialog" aria-modal="true" aria-labelledby="channel-modal-title">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">CHANNEL SETTINGS</p>
+          <h2 id="channel-modal-title">新增视频通道</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-modal aria-label="关闭">×</button>
+      </div>
+
+      <form id="channel-form">
+        <input id="channel-id" type="hidden">
+        <div class="form-grid">
+          <label class="field full-width">
+            <span>通道名称 <b>*</b></span>
+            <input id="channel-name" maxlength="100" required placeholder="例如：Camera 01">
+            <small>用于列表、任务和报警页面显示，不能重复。</small>
+          </label>
+
+          <label class="field full-width">
+            <span>视频源类型 <b>*</b></span>
+            <select id="source-type" required>
+              <option value="camera_index_code">cameraIndexCode</option>
+              <option value="rtsp">直接 RTSP</option>
+              <option value="local_file">本地视频文件</option>
+            </select>
+          </label>
+
+          <label class="field full-width" id="camera-code-field">
+            <span>cameraIndexCode <b>*</b></span>
+            <input id="camera-index-code" placeholder="输入摄像头 cameraIndexCode">
+            <small>连接测试时通过现有接口解析 RTSP；失败时会重新解析并重试。</small>
+          </label>
+
+          <label class="field full-width" id="stream-profile-field">
+            <span>取流码流 <b>*</b></span>
+            <select id="stream-profile">
+              <option value="sub">子码流（节省4G流量）</option>
+              <option value="main">主码流（画质优先）</option>
+            </select>
+            <small>仅用于 cameraIndexCode；子码流向取流接口发送 streamType=1，主码流发送 streamType=0。</small>
+          </label>
+
+          <label class="field full-width hidden" id="source-url-field">
+            <span id="source-url-label">RTSP 地址</span>
+            <input id="source-url" placeholder="rtsp://user:password@host/path">
+            <small id="source-url-help">包含密码时，列表和日志只显示脱敏地址。</small>
+          </label>
+
+          <label class="field full-width">
+            <span>CameraID</span>
+            <input id="camera-id" placeholder="选填，用于后续第三方告警推送">
+          </label>
+
+          <label class="switch-field full-width">
+            <span>
+              <strong>启用通道</strong>
+              <small>停用后仍保存配置，但不能用于新的视频任务。</small>
+            </span>
+            <input id="channel-enabled" type="checkbox" checked>
+            <i></i>
+          </label>
+        </div>
+
+        <div class="form-error hidden" id="form-error"></div>
+        <div class="modal-footer">
+          <button class="button secondary" type="button" data-close-modal>取消</button>
+          <button class="button primary" id="save-channel-button" type="submit">保存通道</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="snapshot-modal" role="dialog" aria-modal="true" aria-labelledby="snapshot-modal-title">
+    <div class="modal-backdrop" data-close-snapshot></div>
+    <div class="modal-card snapshot-card">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">SNAPSHOT PREVIEW</p>
+          <h2 id="snapshot-modal-title">抓拍预览</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-snapshot aria-label="关闭">×</button>
+      </div>
+      <div class="snapshot-stage" id="snapshot-stage">
+        <div class="snapshot-loading">正在连接并抓取画面…</div>
+        <img class="hidden" id="snapshot-image" alt="视频通道抓拍预览">
+      </div>
+      <div class="modal-footer">
+        <span class="snapshot-message" id="snapshot-message"></span>
+        <button class="button secondary" type="button" data-close-snapshot>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <script src="{{ url_for('static', path='/channels.js') }}?v=20260818-channel-traffic2" defer></script>
+</body>
+</html>

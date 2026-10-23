@@ -1,0 +1,3 @@
+[submodule "vendor/yolov5_v6"]
+	path = vendor/yolov5_v6
+	url = https://github.com/ultralytics/yolov5.git

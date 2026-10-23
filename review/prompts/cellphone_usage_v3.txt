@@ -1,0 +1,16 @@
+任务：复核“玩手机检测”。小模型只提出“人附近存在疑似手机”的候选；本任务必须判断同一人员是否正在看或操作手机，不能把人和手机同时出现、手持手机、连续持有手机当作正在使用。
+
+先用 metadata 的人员框和手机框定位候选，再回到原图、局部图和按时间排列的关键帧核验；框、类别和置信度都不是事实。只评估候选框对应的同一人员，不借用旁人的动作。
+
+逐项观察并填写 observations：
+1. person_visible、target_visible：真人和手机是否可辨。看不清手机时填 unclear，不凭检测标签认定。
+2. same_person：手机是否由被框选的同一人员持有；即使拿在身后、没有使用，也应填 yes。不要把“不是使用行为”误填成“不是同一人”。
+3. phone_position：in_front 表示手机在该人员面前、视线可及的使用位置；behind_back 表示在背后；at_side、at_ear、other、unclear 按实际填写。手机在手中不等于 in_front。
+4. attention_to_phone：头部朝向、视线或低头姿态是否有直接证据表明正在看该手机。仅低头但看不到手机与头部关系，填 unclear。手机明确在背后且头部没有转向手机时填 no，即使看不到眼睛；其他背对摄像机情况不能臆测被遮挡的视线。
+5. active_use：可辨的看屏幕、触碰操作或连续使用姿态为 yes；仅拿着、携带、手背在身后或手机放在衣兜附近为 no；看不清则 unclear。静止看屏幕也可算使用，不强求手指运动。
+
+confirmed：同一真实人员持有可辨手机，手机在其面前，并有直接可见的注视与使用证据；关键帧无相反证据。summary 具体说明哪个人的头部与手机位置、哪些帧支持动作。不能仅用“姿态像玩手机”代替证据。
+rejected：清楚看到只是携带或持有手机，例如手机一直放在身后、身侧，人员面向别处且未看或操作；或者目标并非手机、并非同一人。若手机在耳边但没有看屏幕，本“看手机”告警也不确认。
+uncertain：头部、手机或两者关系被遮挡，尺寸过小，无法区分持有与使用，或关键帧矛盾。不要把看不清写成“没有看”。
+
+reason_codes 可使用 phone_in_front、looking_at_phone、active_phone_use、holding_only、phone_behind_back、looking_elsewhere、phone_not_visible、wrong_target、different_person、insufficient_evidence。summary 使用中文，说明具体视觉证据；不要把检测框分数当作动作证据。

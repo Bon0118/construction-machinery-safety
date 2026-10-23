@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "is_target_person",
+    "head_state",
+    "selected_candidate_id",
+    "direct_box",
+    "confidence",
+    "helmet_color",
+    "wearing_state",
+    "visibility_ratio",
+    "truncated",
+    "reason"
+  ],
+  "properties": {
+    "is_target_person": {"type": "boolean"},
+    "head_state": {
+      "type": "string",
+      "enum": ["helmet", "head", "person_only", "ignore", "no_person"]
+    },
+    "selected_candidate_id": {"type": "string"},
+    "direct_box": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 0, "maximum": 1000},
+      "minItems": 0,
+      "maxItems": 4
+    },
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "helmet_color": {
+      "type": "string",
+      "enum": ["yellow", "red", "blue", "white", "orange", "green", "other", "uncertain", "none"]
+    },
+    "wearing_state": {
+      "type": "string",
+      "enum": ["proper", "improper", "not_worn", "unclear", "not_applicable"]
+    },
+    "visibility_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+    "truncated": {"type": "boolean"},
+    "reason": {"type": "string"}
+  }
+}

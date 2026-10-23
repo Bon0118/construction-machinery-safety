@@ -1,0 +1,73 @@
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local environment variables
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# IDE and local tooling
+.idea/
+.vscode/
+.agents/
+.tools/
+token-monitor/
+启动Token Monitor.ps1
+
+# Runtime state, databases, and logs
+data/
+logs/
+runtime/
+alarm_outputs/
+video_outputs/
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# Alarm samples, review results, datasets, and generated deliverables
+review_outputs/
+dataset_outputs/
+model_training_outputs/
+deliverables/
+20260831_告警原图_800/
+20260831_告警原图_800.zip
+
+# Benchmark outputs; keep benchmarks/benchmark_four_algorithms.py
+benchmarks/results/
+benchmarks/*.html
+benchmarks/report_artifact.json
+
+# Model weights and training outputs (store separately or with Git LFS)
+models/
+runs/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.weights
+
+# Generated media and document artifacts
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.gif
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.zip
+*.docx
+*.pdf
+
+# Local Ultralytics caches and demonstration assets
+ultralytics/assets/
+ultralytics/settings.json
+ultralytics/persistent_cache.json

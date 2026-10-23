@@ -1,0 +1,19 @@
+任务：复核明火检测。
+
+真实火焰通常具有不规则或尖锐轮廓、黄色/橙色/白色高亮核心、周围渐变光晕，并在连续关键帧中出现合理的形态变化。
+
+confirmed 条件：
+- 单帧中存在清晰且不可合理解释为其他物体的火焰；或者
+- 至少两个关键帧在相近位置出现形态变化合理的火焰。
+
+rejected 条件：
+- 候选区域可以明确识别为施工灯、车灯、警示灯、阳光反光、金属反光、橙色安全服、安全锥、设备外壳、屏幕或标识牌。
+
+uncertain 条件：
+- 只有单个过曝亮点；
+- 无法区分火焰、电焊和火花；
+- 目标太小、模糊、被遮挡；
+- 多帧中没有足够细节判断形态变化。
+
+reason_codes 仅使用：visible_flame、multi_frame_flame、light_source、reflection、orange_object、vehicle_light、welding_or_sparks、overexposed、target_too_small、blurred、occluded、insufficient_evidence。
+

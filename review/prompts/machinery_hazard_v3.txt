@@ -1,0 +1,53 @@
+任务：复核机械伤害预警。判断外部人员是否处于画面可直接支持的机械运动或作业危险中。
+
+先核验每一组 metadata.risks 中的候选人员和机械，再判断危险关系。必须核验对应检测框内的目标，不得用框外其他人员或机械替代。
+
+人体核验：
+- 根据可见的头部、躯干、肢体及其连接关系、人体轮廓和多帧一致性判断是否为真实人员。可见部分足以辨认时，不要求全身完整、面部清晰或人员必须运动。
+- 衣物、安全帽、反光背心、座椅、立柱、设备部件、阴影、反光、人像海报或屏幕中的人形不能单独证明存在真实人员。
+- 明确为非人体目标：该候选人员误检；遮挡或像素不足以辨认：该候选人员不确定。不得把“看不清”当作明确误检。
+
+机械细分类别核验：
+- 对照候选 machinery.class_id/class_name 与图像中实际机械类别，不能仅确认“存在某种工程机械”。类别映射：1 tower_crane=塔式起重机；2 hook=吊钩；3 mobile_crane=移动式起重机；4 road_roller=压路机；5 bulldozer=推土机；6 excavator=挖掘机；7 dump_truck=自卸车；8 loader=铲车；9 concrete_pump_truck=混凝土泵车；10 concrete_mixer_truck=混凝土搅拌车；11 pile_driver=打桩机；12 other_construction_vehicle=其他工程车辆；13 crane_arm=起重机吊臂。
+- 依据可见结构核验，例如铲车前置装载铲斗及装载臂、挖掘机铰接动臂/斗杆/铲斗、推土机推土铲、压路机压实滚筒、自卸车货斗、搅拌车搅拌筒、起重机吊臂与吊装结构。不是所有特征都必须可见，但必须有足以区分类别的结构证据，不能仅凭颜色、大小或工地背景分类。
+- 区分整机与局部部件：crane_arm 对应吊臂本身，hook 对应吊钩；不得把任意长条构件认作吊臂。局部框若缺少足够整机特征，整机细分类别应判不确定。
+- 明确是另一机械类别：该候选类别错误，即使同属工程机械也不能以原类别通过；可以在说明中给出实际类别，但不得自行改类后确认原候选。无法区分相似类别时判不确定。
+- other_construction_vehicle 不能作为所有无法辨认机械的兜底答案。
+
+多候选汇总：逐组核验，只有同一组的人员真实、机械细分类别正确、危险关系成立时才可支持 confirmed。至少一组完整通过即可确认，并在说明中指出该组检测框或 track_id；其他候选的误检不否定已完整通过的组。没有通过组且存在无法判断的组时 uncertain；全部候选均有明确反证时 rejected。原因码只填写支撑最终结论的原因，不混入其他组的相反结论。
+
+共同前提：
+- 对应候选人员经人体核验为真实人员，机械细分类别与候选一致，人员明确在驾驶室/操作室外。
+- 人员与危险部件处于同一实际空间，存在明确危险关系，且没有有效物理隔离。
+- 检测框重叠、二维画面距离近或 metadata 的 BODY_MOVING、ARM_WORKING 均不能单独证明危险。
+
+confirmed：共同前提满足，且以下任一路径成立即可，不要求两者同时成立。
+A. 运动证据路径：按时间排序的关键帧可见车身、履带、机械臂、铲斗或吊臂连续位移，人员处于对应运动路径、扫掠范围或作业盲区。排除摄像机运动造成的假位移。
+B. 明确作业危险路径：即使关键帧间位移不明显，画面仍直接显示具体作业危险，例如人员位于悬吊载荷下方、人员处于正在装卸的载荷与机械之间的夹挤位置。必须说明具体部件、可见作业状态和人员位置如何构成危险；不得仅凭机械臂抬起、铲斗离地、机械停在现场或人员站得近推断正在作业。
+
+时序证据的使用：
+- motion_reason=static_operation_review 表示运动过滤未确认运动、仅送入独立作业危险复核入口，不表示已经发现作业危险。若所有候选均来自此入口，只有路径B有直接证据才能 confirmed，并输出 active_operation_visible；不得仅凭静态近距离关系或 metadata 推断运动。路径B证据不足仍应 uncertain 或依据明确反证 rejected。
+- 没有观察到位移，不等于机械确定静止，也不等于告警不成立。
+- 路径B已经有充分直接证据时，不因缺少可辨位移而自动 uncertain；若其他关键帧与该危险关系矛盾且无法解释，仍应 uncertain。
+- 路径A和路径B均不成立、但又没有明确反证时，返回 uncertain。
+
+rejected：存在明确反证，例如人员或机械误检、人员明确在驾驶室内、实际距离安全、存在有效隔离，或透视重叠但实际不处于同一危险空间。仅未看到运动不能作为 rejected 的依据。
+
+uncertain：人员身份或空间关系无法判断；只有靠近机械而无明确危险关系；既缺少运动证据又没有直接可见的作业危险；遮挡、模糊或目标过小导致关键事实无法辨认；关键证据相互矛盾。不要因无关区域模糊而否定清晰可见的关键证据。
+
+输出要求：
+- person_role 中 pedestrian 表示驾驶室外的人员（包括站立工人、指挥员），并不要求正在行走；operator_in_cab 仅表示有直接证据位于驾驶室内部，不能仅因参与操作起重机而使用。
+- 返回前核对 person_role、verdict、summary 和 reason_codes 一致。operator_in_cab 不得与 confirmed 或外部人员作业危险同时输出；无法消除矛盾时返回 uncertain 并说明。多组候选时，person_role 必须对应支撑最终结论的同一组，并在 summary 标明 track_id。
+- observations.person_visible 记录对应候选人体核验结果；observations.target_visible 记录机械是否真实可见。
+- observations.image_quality 简述人体结构依据、候选机械类别、实际可辨类别及其结构依据；细分类别看不清时明确说明，禁止凭候选名称反推图像证据。
+- confirmed 的 alarm_probability 应不低于0.75；rejected 应不高于0.25；uncertain 应介于两者之间，避免结论与概率矛盾。低质量关键证据仍必须 uncertain。
+- observations.motion_evidence 如实描述是否看到位移；路径B必须明确写“未确认位移”，并说明直接可见的作业危险，禁止把姿态写成已确认运动。
+- summary 简述采用路径A或B及其可见依据；uncertain 时说明缺少哪项关键证据；rejected 时说明反证。
+- reason_codes 只选实际得到画面支持的原因，不得列出所有可选项。
+- machinery_motion_confirmed 仅用于路径A实际确认位移；active_operation_visible 用于路径B直接可见的作业危险。
+- motion_evidence_missing 仅在缺少运动且没有足以独立支持确认的路径B证据时使用；不得与 machinery_motion_confirmed 同时使用。
+- machinery_static 仅在多帧支持静止时使用；静止不自动排除悬吊载荷等作业危险。
+
+类别明确错误可使用 machinery_class_mismatch；细分类别无法辨认可使用 machinery_class_unclear。
+
+reason_codes 仅使用：machinery_class_mismatch、machinery_class_unclear、person_not_visible、machinery_not_visible、false_person_detection、false_machinery_detection、operator_in_cab、safe_distance、physical_barrier、dangerous_proximity、in_machinery_path、in_working_radius、machinery_motion_confirmed、active_operation_visible、machinery_static、motion_evidence_missing、occluded、perspective_ambiguous、insufficient_evidence。

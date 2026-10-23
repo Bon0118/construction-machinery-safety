@@ -1,0 +1,40 @@
+任务：判断画面中的人员是否正确佩戴施工安全帽。该算法的告警条件是“人员未佩戴施工安全帽”。
+
+定义与禁止事项：
+- 普通鸭舌帽、布帽、遮阳帽、头巾、黑色头发、发髻均不属于施工安全帽。
+- 穿反光背心不能证明佩戴了安全帽。
+- 头部存在深色、白色或黄色区域，不能单独作为安全帽证据。
+- 只有清晰看到硬质帽壳和稳定的帽体轮廓，才能把 headgear_type 判为 safety_helmet。
+- 如果只能描述为“可能是帽子或安全帽”“cap or helmet”“疑似安全帽”，headgear_type 必须为 unclear，verdict 必须为 uncertain，禁止 rejected。
+
+请依次判断：
+本次只复核 metadata.review_target_id 指定的一个人员，detections 中的框用于定位。不得用其他人员的头部替代。target_id 必须原样返回。多人告警由程序分别复核并汇总。
+1. 是否存在真实人员。
+2. 人员头部是否清晰可见。
+3. 头部属于 safety_helmet、ordinary_hat、bare_head 还是 unclear。
+4. 是否能清晰看到硬质帽壳。
+5. 是否能清晰看到稳定的安全帽帽体轮廓。
+6. 多个关键帧中的结论是否一致。
+
+最终映射规则：
+- bare_head → confirmed（未佩戴安全帽，告警成立）。
+- ordinary_hat → confirmed（普通帽不等于安全帽，告警成立）。
+- safety_helmet 且 hard_shell_visible=yes 且 helmet_outline_visible=yes → rejected。
+- unclear → uncertain。
+- 图像描述包含“可能、疑似、cap or helmet、hat or helmet” → uncertain。
+
+证据等级规则：
+- head_size_band 是程序已计算的尺寸档位，必须使用该档位，不要自行改写比较结果。例如24像素属于16_to_31，不能说“24小于16”。像素档位与图像是否遮挡是不同问题。
+- metadata 中 head_target_short_edge_pixels 小于64时，evidence_quality 最高只能为 medium。
+- head_target_short_edge_pixels 是原始图像中实际检测到的头部框短边，不是人体框尺寸；缺少该值或 head_size_source=unknown 表示未知，禁止用人体尺寸或放大后的像素冒充头部细节。
+- 如果实际头部尺寸未知，且 body_envelope_short_edge_pixels 小于16，说明连人体包络都过小，仍必须 low/uncertain。该数值只是人体包络约束，不是实际头部尺寸；不能反过来因为人体框大就认为头部清晰。
+- 头部短边小于16时，evidence_quality 必须为 low，verdict 必须为 uncertain。
+- 头部短边16～31时，不因尺寸单独判 uncertain。只有真实人员与头部可辨、具体裸头或普通帽结构可见，且至少两个不同时间点的关键帧对同一人员提供一致直接证据时，才可 confirmed；alarm_probability 和 verdict_confidence 均须不低于0.85，否则 uncertain。证据质量最高为 medium。
+- 头部尺寸未知时采用上述严格证据要求，无法辨认关键结构必须 uncertain。32像素及以上也不能单凭尺寸判为清晰。
+- observations.visible_head_features 只列可直接看见的结构：hair_structure（头发结构）、scalp_contour（头皮轮廓）、fabric_cap（布质帽体）、soft_hat_brim（软帽帽檐）、rigid_shell（硬帽壳）、helmet_outline（安全帽轮廓）。颜色、检测类别或未检出安全帽不属于结构证据。
+- observations.evidence_frames 填写实际支持该人员头部结论的关键帧编号，例如 ["T1","T3"]。必须是同一人员；仅看见身体、重复画面或头部被遮挡的帧不算。不能为了满足数量要求虚构证据。
+- 颜色、反光背心或检测框不能提升 evidence_quality。
+
+reason_codes 仅使用：person_visible、person_not_visible、head_visible、head_not_visible、bare_head_visible、ordinary_hat_visible、helmet_visible、hard_shell_visible、helmet_outline_visible、false_person_detection、target_too_small、blurred、occluded、multi_frame_consistent、insufficient_evidence。
+
+目标定位规则（优先执行）：图片1的红框标出了本次唯一目标，只用于定位；图片2是该框内部的紧裁剪图，图片3是通过可靠跟踪得到的该目标连续局部图。只能根据图片2、3内的真实人体和头部判断，禁止借用红框外其他人员。图片1中的其他工人不能充当证据。局部图为墙体、水渍、文字或其他非人体时应 rejected；无法辨认为同一人体或头部不清晰时应 uncertain。所有 confirmed 结论均要求至少两个相隔0.3秒的目标局部帧支持，概率及置信度均至少0.85。

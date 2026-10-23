@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>实时预览 · 工程机械伤害检测平台</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v=20260817-preview2">
+</head>
+<body class="preview-page">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <strong>智能检测平台</strong>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="主导航">
+        <a class="nav-item" href="/channels">
+          <span class="nav-icon">▣</span>
+          <span>视频通道</span>
+        </a>
+        <a class="nav-item" href="/tasks">
+          <span class="nav-icon">▤</span>
+          <span>视频任务</span>
+        </a>
+        <a class="nav-item active" href="/preview">
+          <span class="nav-icon">▶</span>
+          <span>实时预览</span>
+        </a>
+        <a class="nav-item" href="/alarms">
+          <span class="nav-icon">!</span>
+          <span>视频告警</span>
+        </a>
+        <a class="nav-item" href="/manual-reviews">
+          <span class="nav-icon">审</span>
+          <span>人工复核</span>
+        </a>
+        <a class="nav-item" href="/training"><span class="nav-icon">训</span><span>模型训练</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot online"></span>
+        <span>Web 服务运行中</span>
+      </div>
+    </aside>
+
+    <main class="main-content preview-content">
+      <header class="topbar preview-topbar">
+        <div>
+          <p class="eyebrow">LIVE MONITORING</p>
+          <h1>实时预览</h1>
+        </div>
+        <div class="preview-header-actions">
+          <span class="preview-refresh-time" id="preview-refresh-time">等待加载</span>
+          <button class="button secondary" id="preview-refresh" type="button">刷新通道</button>
+        </div>
+      </header>
+
+      <section class="preview-console" id="preview-console">
+        <aside class="preview-source-panel" aria-label="预览通道选择">
+          <section class="source-panel-section protocol-section">
+            <div class="source-section-title">
+              <span>播放协议</span>
+              <span class="protocol-running">运行中</span>
+            </div>
+            <label class="protocol-select-label" for="preview-protocol">视频传输方式</label>
+            <select class="protocol-select" id="preview-protocol">
+              <option value="mjpeg">MJPEG（当前可用）</option>
+              <option value="webrtc" disabled>WebRTC（待扩展）</option>
+              <option value="websocket" disabled>WebSocket（待扩展）</option>
+            </select>
+            <div class="protocol-quality" aria-label="MJPEG 协议特性">
+              <div><span>兼容性</span><strong>优秀</strong></div>
+              <div><span>实时性</span><strong>较高</strong></div>
+              <div><span>带宽</span><strong>较高</strong></div>
+            </div>
+            <p class="protocol-hint">当前由本机统一转为浏览器可播放的 MJPEG，RTSP 地址不会暴露给前端。</p>
+          </section>
+
+          <section class="source-panel-section channel-browser-section">
+            <div class="source-section-title">
+              <span>视频通道</span>
+              <span class="channel-total" id="preview-channel-count">0</span>
+            </div>
+            <label class="channel-search-box">
+              <span aria-hidden="true">⌕</span>
+              <input id="channel-search" type="search" placeholder="搜索通道名称" autocomplete="off">
+            </label>
+            <div class="channel-tree" id="channel-tree" aria-live="polite">
+              <div class="channel-tree-loading">正在加载通道…</div>
+            </div>
+          </section>
+
+          <footer class="source-panel-footer">
+            <span><i class="tree-state-dot online"></i> 在线 <strong id="preview-total-online">0</strong></span>
+            <span><i class="tree-state-dot offline"></i> 其他 <strong id="preview-total-other">0</strong></span>
+          </footer>
+        </aside>
+
+        <section class="preview-workspace" id="preview-workspace">
+          <header class="workspace-toolbar">
+            <div class="workspace-status">
+              <strong id="workspace-title">通道预览</strong>
+              <span><i class="workspace-live-dot"></i> 当前画面在线 <b id="preview-online-count">0</b></span>
+            </div>
+            <div class="preview-toolbar" aria-label="预览布局">
+              <div class="layout-switcher" role="group" aria-label="画面布局">
+                <button class="layout-button" type="button" data-layout="1" title="单画面">1</button>
+                <button class="layout-button active" type="button" data-layout="4" title="4 宫格">4</button>
+                <button class="layout-button" type="button" data-layout="9" title="9 宫格">9</button>
+              </div>
+              <button class="workspace-icon-button" id="preview-fullscreen" type="button" title="全屏预览" aria-label="全屏预览">⛶</button>
+            </div>
+          </header>
+
+          <div class="preview-panel">
+            <div class="preview-grid" id="preview-grid" data-layout="4" aria-live="polite">
+              <div class="preview-loading">正在加载视频通道…</div>
+            </div>
+
+            <div class="preview-empty hidden" id="preview-empty">
+              <div class="empty-icon">▣</div>
+              <h2>暂无可预览通道</h2>
+              <p>请先在视频通道中新增并启用至少一路视频源。</p>
+              <a class="button primary preview-link-button" href="/channels">前往视频通道</a>
+            </div>
+
+            <footer class="preview-pagination hidden" id="preview-pagination">
+              <button class="page-button" id="preview-previous" type="button" aria-label="上一页">‹</button>
+              <div class="page-numbers" id="preview-page-numbers"></div>
+              <span class="page-summary" id="preview-page-summary"></span>
+              <button class="page-button" id="preview-next" type="button" aria-label="下一页">›</button>
+            </footer>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <script src="{{ url_for('static', path='/preview.js') }}?v=20260817-preview2" defer></script>
+</body>
+</html>

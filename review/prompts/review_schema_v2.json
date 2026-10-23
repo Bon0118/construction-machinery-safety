@@ -1,0 +1,64 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "alarm_probability",
+    "verdict_confidence",
+    "evidence_quality",
+    "observations",
+    "reason_codes",
+    "summary",
+    "needs_manual_review"
+  ],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["confirmed", "rejected", "uncertain"]
+    },
+    "alarm_probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "verdict_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_quality": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "person_visible",
+        "target_visible",
+        "person_role",
+        "spatial_relation",
+        "motion_evidence",
+        "physical_barrier",
+        "keyframe_consistency",
+        "image_quality"
+      ],
+      "properties": {
+        "person_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "target_visible": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "person_role": {"type": "string", "enum": ["pedestrian", "operator_in_cab", "no_person", "unclear"]},
+        "spatial_relation": {"type": "string"},
+        "motion_evidence": {"type": "string"},
+        "physical_barrier": {"type": "string", "enum": ["yes", "no", "unclear"]},
+        "keyframe_consistency": {"type": "string"},
+        "image_quality": {"type": "string"}
+      }
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "summary": {"type": "string"},
+    "needs_manual_review": {"type": "boolean"}
+  }
+}

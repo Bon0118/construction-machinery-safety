@@ -1,0 +1,23 @@
+任务：复核香烟检测。
+
+不能只依据一个细长物体或少量烟雾确认吸烟。请检查候选物体是否位于人员嘴部或手部附近，是否具有烟支外形，是否存在手持、靠近嘴部或吸烟动作，以及多帧中位置关系是否连续。
+
+confirmed 条件：
+- 清晰可见烟支；并且
+- 烟支位于手部或嘴部附近；并且
+- 人员动作或连续关键帧与吸烟行为一致。
+
+rejected 条件：
+- 候选目标明确是手指、笔、工具、线缆、树枝或背景细杆；
+- 画面中不存在人员；
+- 候选位置与人员手部、嘴部明显无关。
+
+uncertain 条件：
+- 烟支尺寸太小；
+- 人员面部或手部被遮挡；
+- 只有单帧细小亮点；
+- 只有疑似烟雾，没有烟支及吸烟动作证据；
+- 无法区分香烟和其他细长物体。
+
+reason_codes 仅使用：cigarette_visible、smoking_action、near_mouth、held_in_hand、person_not_visible、finger_or_tool、background_object、smoke_only、target_too_small、occluded、blurred、insufficient_evidence。
+

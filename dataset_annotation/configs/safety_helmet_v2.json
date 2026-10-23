@@ -1,0 +1,103 @@
+{
+  "schema_version": "safety-helmet-v2-teacher-pipeline",
+  "training_width": 640,
+  "training_height": 640,
+  "class_names": ["person", "head", "helmet"],
+  "minimum_head_short_side": 20,
+  "helmet_visible_ratio_minimum": 0.5,
+  "person_minimum_size": null,
+  "person_box_mode": "visible",
+  "head_helmet_mutually_exclusive": true,
+  "quality": {
+    "grey_low_saturation_ratio": 0.92,
+    "grey_mean_channel_spread": 1.5,
+    "grey_max_brightness_std": 25.0,
+    "white_pixel_threshold": 245,
+    "maximum_white_ratio": 0.08,
+    "black_pixel_threshold": 10,
+    "duplicate_hash_distance": 3
+  },
+  "manual_quality_rejections": {
+    "event_Camera_01_20260826_120733_623221_frame_018801": "corrupt_mosaic_frame",
+    "event_Camera_01_20260825_202044_592210_frame_263117": "abnormal_bright_block",
+    "event_Camera_01_20260826_162723_184879_frame_313218": "corrupt_decode_band"
+  },
+  "known_non_person_events": {
+    "event_Camera_01_20260826_131646_952372_frame_088250": "user_confirmed_cow_not_person",
+    "event_Camera_01_20260826_130100_839583_frame_071478": "user_confirmed_cow_not_person",
+    "event_Camera_01_20260826_130511_422734_frame_075858": "visual_qa_cow_not_person",
+    "event_Camera_01_20260826_125920_484605_frame_069659": "review_and_visual_qa_animal_not_person",
+    "event_Camera_01_20260825_063358_440270_frame_1162188": "review_and_visual_qa_non_person_object",
+    "event_Camera_01_20260825_123356_329586_frame_1663945": "review_and_visual_qa_vehicle_not_person",
+    "event_Camera_01_20260825_224433_276858_frame_475888": "review_and_visual_qa_vehicle_not_person",
+    "event_Camera_01_20260825_001815_611277_frame_610788": "review_and_visual_qa_structure_not_person",
+    "event_Camera_01_20260826_090812_860510_frame_1389020": "review_and_visual_qa_equipment_not_person",
+    "event_Camera_01_20260826_002926_520482_frame_630939": "review_and_visual_qa_structure_not_person",
+    "event_Camera_01_20260825_202753_881962_frame_273452": "review_and_visual_qa_equipment_not_person",
+    "event_Camera_01_20260824_164854_014169_frame_006953": "review_and_visual_qa_vehicle_not_person",
+    "event_Camera_01_20260826_075307_922420_frame_1286010": "review_and_visual_qa_equipment_not_person"
+  },
+  "crop": {
+    "output_size": 640,
+    "minimum_source_side": 128,
+    "person_width_multiplier": 2.2,
+    "person_height_multiplier": 0.8,
+    "vertical_center_ratio": 0.28,
+    "association_horizontal_expand": 0.25,
+    "association_top_expand": 0.2,
+    "association_bottom_ratio": 0.65
+  },
+  "sampling": {
+    "count": 50,
+    "seed": 20260826,
+    "bucket_targets": {
+      "head": 15,
+      "helmet": 25,
+      "difficult": 10
+    }
+  },
+  "teacher_pipeline": {
+    "device": "cuda",
+    "allow_cpu_fallback": true,
+    "person_detector": {
+      "backend": "torchvision_fasterrcnn_resnet50_fpn_v2_coco",
+      "confidence_threshold": 0.45,
+      "nms_iou_threshold": 0.45,
+      "maximum_people_per_image": 8
+    },
+    "grounding_dino": {
+      "model_id": "E:/AI/Models/GroundingDINO/grounding-dino-tiny",
+      "prompts": [
+        "human head",
+        "bare head",
+        "construction safety helmet",
+        "hard hat",
+        "ordinary hat",
+        "motorcycle helmet",
+        "welding mask"
+      ],
+      "box_threshold": 0.22,
+      "text_threshold": 0.20,
+      "nms_iou_threshold": 0.45,
+      "maximum_candidates_per_kind": 4
+    },
+    "sam2": {
+      "enabled": true,
+      "model_cfg": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint": "E:/AI/Models/SAM2/sam2.1_hiera_tiny.pt",
+      "minimum_mask_box_iou": 0.15,
+      "maximum_mask_area_multiplier": 3.0
+    },
+    "qwen": {
+      "server_url": "http://127.0.0.1:8010/v1/chat/completions",
+      "model": "Qwen3VL-4B",
+      "prompt_path": "dataset_annotation/prompts/safety_helmet_annotation_v2.txt",
+      "schema_path": "dataset_annotation/prompts/safety_helmet_annotation_schema_v2.json",
+      "timeout_seconds": 180.0,
+      "max_tokens": 420,
+      "retries": 1,
+      "concurrency": 2,
+      "minimum_auto_confidence": 0.80
+    }
+  }
+}

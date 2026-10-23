@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>人工复核 · 智能检测平台</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v=20260828-manual-review3">
+</head>
+<body class="manual-reviews-page">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div><strong>智能检测平台</strong></div>
+      </div>
+      <nav class="nav-list" aria-label="主导航">
+        <a class="nav-item" href="/channels"><span class="nav-icon">▦</span><span>视频通道</span></a>
+        <a class="nav-item" href="/tasks"><span class="nav-icon">▶</span><span>视频任务</span></a>
+        <a class="nav-item" href="/preview"><span class="nav-icon">▣</span><span>实时预览</span></a>
+        <a class="nav-item" href="/alarms"><span class="nav-icon">!</span><span>视频告警</span></a>
+        <a class="nav-item active" href="/manual-reviews"><span class="nav-icon">审</span><span>人工复核</span></a>
+        <a class="nav-item" href="/training"><span class="nav-icon">训</span><span>模型训练</span></a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot online"></span><span>Web 服务运行中</span></div>
+    </aside>
+
+    <main class="main-content manual-review-content">
+      <header class="topbar manual-review-topbar">
+        <div><p class="eyebrow">HUMAN IN THE LOOP</p><h1>人工复核</h1></div>
+        <div class="manual-review-tabs" role="tablist" aria-label="人工复核页面">
+          <button class="manual-review-tab active" type="button" role="tab" aria-selected="true" data-review-view="queue">待复核队列</button>
+          <button class="manual-review-tab" type="button" role="tab" aria-selected="false" data-review-view="workbench">标注工作台</button>
+          <button class="manual-review-tab" type="button" role="tab" aria-selected="false" data-review-view="history">审核记录</button>
+        </div>
+      </header>
+
+      <section class="manual-review-view" id="manual-review-queue" data-review-page="queue">
+        <div class="manual-review-filter-panel">
+          <label class="alarm-filter-field"><span>AI 复核结果</span>
+            <select id="manual-ai-filter">
+              <option value="">全部结果</option>
+              <option value="rejected">rejected</option>
+              <option value="uncertain">uncertain</option>
+              <option value="confirmed">confirmed</option>
+              <option value="pending">pending</option>
+            </select>
+          </label>
+          <label class="alarm-filter-field"><span>人工状态</span>
+            <select id="manual-human-filter">
+              <option value="pending" selected>待复核</option>
+              <option value="draft">草稿</option>
+              <option value="conference">需会审</option>
+              <option value="completed">已完成</option>
+              <option value="">全部状态</option>
+            </select>
+          </label>
+          <label class="alarm-filter-field"><span>告警任务</span><select id="manual-task-filter"><option value="">全部任务</option></select></label>
+          <label class="alarm-filter-field"><span>视频通道</span><select id="manual-channel-filter"><option value="">全部通道</option></select></label>
+          <label class="alarm-filter-field"><span>告警日期</span><input id="manual-date-filter" type="date"></label>
+          <button class="button primary" id="manual-query-button" type="button">查询</button>
+          <button class="button secondary" id="manual-reset-button" type="button">重置</button>
+        </div>
+
+        <div class="manual-review-metrics" aria-label="人工复核统计">
+          <article><span>教师预标注待复核</span><strong id="manual-metric-pending">0</strong></article>
+          <article><span>草稿</span><strong id="manual-metric-draft">0</strong></article>
+          <article><span>今日已完成</span><strong id="manual-metric-completed">0</strong></article>
+          <article><span>需会审</span><strong id="manual-metric-conference">0</strong></article>
+          <article><span>人工修正率</span><strong id="manual-metric-correction">0%</strong></article>
+        </div>
+
+        <section class="manual-queue-panel">
+          <header class="manual-panel-header">
+            <div><h2>教师预标注复核样本</h2><p>仅显示已生成教师模型候选标签的安全帽 person/head/helmet 样本。</p></div>
+            <div>共 <strong id="manual-queue-total">0</strong> 条</div>
+          </header>
+          <div class="manual-queue-list" id="manual-queue-list"><div class="manual-review-loading">正在加载复核样本…</div></div>
+          <div class="manual-review-empty hidden" id="manual-queue-empty"><div class="empty-icon">审</div><h3>当前筛选条件下没有样本</h3><p>可以切换人工状态或 AI 复核结果继续查看。</p></div>
+          <footer class="manual-review-pagination">
+            <button class="page-button" id="manual-queue-previous" type="button">‹</button>
+            <span id="manual-queue-page-summary">第 1 / 1 页</span>
+            <button class="page-button" id="manual-queue-next" type="button">›</button>
+          </footer>
+        </section>
+      </section>
+
+      <section class="manual-review-view hidden" id="manual-review-workbench" data-review-page="workbench">
+        <div class="manual-workbar">
+          <div>
+            <strong id="manual-current-title">请从待复核队列选择样本</strong>
+            <p id="manual-current-meta">原图、模型证据和人工标注会在这里集中展示。</p>
+          </div>
+          <div class="manual-workbar-actions">
+            <button class="button secondary compact" id="manual-back-queue" type="button">返回队列</button>
+            <button class="button secondary compact" id="manual-previous-sample" type="button">← 上一条</button>
+            <button class="button secondary compact" id="manual-next-sample" type="button">下一条 →</button>
+          </div>
+        </div>
+
+        <div class="manual-workspace" id="manual-workspace">
+          <aside class="manual-sample-rail">
+            <h2>相邻样本</h2>
+            <div id="manual-sample-rail"><p class="manual-rail-hint">从队列选择样本后显示</p></div>
+          </aside>
+
+          <section class="manual-canvas-panel">
+            <div class="manual-canvas-toolbar">
+              <div class="manual-tools" role="toolbar" aria-label="标注工具">
+                <button class="manual-tool active" type="button" data-annotation-tool="select">选择/调整</button>
+                <button class="manual-tool person" type="button" data-annotation-tool="person">框 person</button>
+                <button class="manual-tool head" type="button" data-annotation-tool="head">框 head</button>
+                <button class="manual-tool helmet" type="button" data-annotation-tool="helmet">框 helmet</button>
+                <button class="manual-tool delete" type="button" data-annotation-tool="delete">删除框</button>
+                <button class="manual-tool undo" id="manual-undo-annotation" type="button" title="撤销最近一次标注操作（Ctrl+Z）" disabled>撤销</button>
+              </div>
+              <div class="manual-canvas-controls">
+                <button class="manual-view-button active" type="button" data-image-kind="original">原图</button>
+                <button class="manual-view-button" type="button" data-image-kind="alarm">告警图</button>
+                <label><input id="manual-show-candidates" type="checkbox" checked>候选框</label>
+                <button class="manual-view-button manual-zoom-display" id="manual-zoom-display" type="button" title="鼠标滚轮缩放；点击恢复 100%">100%</button>
+                <button class="manual-view-button" id="manual-reset-annotations" type="button">重置候选框</button>
+              </div>
+            </div>
+            <div class="manual-canvas-stage" id="manual-canvas-stage">
+              <canvas id="manual-annotation-canvas" aria-label="人工标注画布"></canvas>
+              <div class="manual-canvas-placeholder" id="manual-canvas-placeholder">请先选择一条复核样本</div>
+            </div>
+            <div class="manual-canvas-footer">
+              <div class="manual-legend">
+                <span class="person">person：只标可见人体</span>
+                <span class="head">head：未佩戴安全帽的人头</span>
+                <span class="helmet">helmet：安全帽与人头组合框</span>
+                <span class="manual-resize-hint">选中人工框后，拖动四角或边缘控制点调整大小</span>
+              </div>
+              <div class="manual-zoom-panel">
+                <strong>选中目标头肩放大</strong>
+                <canvas id="manual-crop-canvas" aria-label="头肩区域放大图"></canvas>
+                <small id="manual-crop-hint">选择 person/head/helmet 框查看局部细节</small>
+              </div>
+            </div>
+          </section>
+
+          <aside class="manual-inspector">
+            <section>
+              <h2>模型证据（只读）</h2>
+              <dl class="manual-evidence-list">
+                <div><dt>AI 复核结果</dt><dd id="manual-ai-status">-</dd></div>
+                <div><dt>判断置信度</dt><dd id="manual-ai-confidence">-</dd></div>
+                <div><dt>证据质量</dt><dd id="manual-ai-quality">-</dd></div>
+                <div><dt>模型</dt><dd id="manual-ai-model">-</dd></div>
+              </dl>
+              <p class="manual-ai-summary" id="manual-ai-summary">尚未加载样本。</p>
+            </section>
+
+            <section>
+              <div class="manual-inspector-heading"><h2>人工标注对象</h2><span id="manual-object-count">0 个</span></div>
+              <div class="manual-object-list" id="manual-object-list"><p>暂无标注框</p></div>
+              <div class="manual-object-properties hidden" id="manual-object-properties">
+                <label>类别
+                  <select id="manual-object-class"><option value="person">person</option><option value="head">head</option><option value="helmet">helmet</option></select>
+                </label>
+                <label class="manual-inline-check"><input id="manual-object-truncated" type="checkbox">目标被图像边缘截断</label>
+                <label id="manual-helmet-color-field">安全帽颜色（仅元数据）<input id="manual-object-color" type="text" maxlength="32" placeholder="如 yellow"></label>
+                <div class="manual-person-head-status hidden" id="manual-person-head-status">
+                  <div><strong id="manual-person-head-status-label">-</strong><small id="manual-person-head-status-size">-</small></div>
+                  <p id="manual-person-head-status-reason">-</p>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h2>问题归因与审核意见</h2>
+              <div class="manual-reason-grid" id="manual-reason-grid">
+                <label><input type="checkbox" value="missing_label">漏标</label>
+                <label><input type="checkbox" value="wrong_class">类别错误</label>
+                <label><input type="checkbox" value="box_offset">框位置偏移</label>
+                <label><input type="checkbox" value="head_assignment_unclear">人头归属不清</label>
+                <label><input type="checkbox" value="poor_image_quality">图片质量差</label>
+                <label><input type="checkbox" value="non_person_target">非人员目标</label>
+                <label><input type="checkbox" value="other">其他</label>
+              </div>
+              <label class="manual-comment-field">人工审核意见
+                <textarea id="manual-review-comment" maxlength="4000" placeholder="说明模型错在哪里、人工如何修正，或为什么该样本不应进入训练集。"></textarea>
+              </label>
+            </section>
+
+            <section class="manual-decision-section">
+              <h2>人工结论</h2>
+              <div class="manual-decision-grid" id="manual-decision-grid">
+                <button type="button" data-decision="confirmed">确认通过</button>
+                <button type="button" data-decision="corrected">修改后通过</button>
+                <button type="button" data-decision="no_target">无目标</button>
+                <button type="button" data-decision="uncertain">暂不确定</button>
+                <button type="button" data-decision="ignored">忽略样本</button>
+              </div>
+              <label class="manual-reviewer-field">审核人<input id="manual-reviewer" type="text" maxlength="80" value="本机审核员"></label>
+              <div class="manual-submit-actions">
+                <button class="button secondary" id="manual-save-draft" type="button">保存草稿</button>
+                <button class="button primary" id="manual-submit-review" type="button">提交并下一条</button>
+              </div>
+              <p class="manual-save-state" id="manual-save-state" aria-live="polite">未加载样本</p>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="manual-review-view hidden" id="manual-review-history" data-review-page="history">
+        <div class="manual-history-filter-panel">
+          <label class="alarm-filter-field"><span>人工结论</span>
+            <select id="manual-history-decision"><option value="">全部结论</option><option value="confirmed">确认通过</option><option value="corrected">修改后通过</option><option value="no_target">无目标</option><option value="uncertain">暂不确定</option><option value="ignored">忽略样本</option></select>
+          </label>
+          <label class="alarm-filter-field"><span>问题归因</span>
+            <select id="manual-history-reason"><option value="">全部原因</option><option value="missing_label">漏标</option><option value="wrong_class">类别错误</option><option value="box_offset">框位置偏移</option><option value="head_assignment_unclear">人头归属不清</option><option value="poor_image_quality">图片质量差</option><option value="non_person_target">非人员目标</option><option value="other">其他</option></select>
+          </label>
+          <label class="alarm-filter-field"><span>审核日期</span><input id="manual-history-date" type="date"></label>
+          <button class="button primary" id="manual-history-query" type="button">查询</button>
+          <a class="button secondary manual-export-button" href="/api/manual-reviews/export">导出已确认真值</a>
+        </div>
+        <section class="manual-history-panel">
+          <header class="manual-panel-header"><div><h2>审核记录</h2><p>AI 原结果与人工版本分别保存，可追溯每次提交。</p></div><div>共 <strong id="manual-history-total">0</strong> 条</div></header>
+          <div class="manual-history-table-wrap">
+            <table class="manual-history-table">
+              <thead><tr><th>样本编号</th><th>AI 结果</th><th>人工结论</th><th>标注统计</th><th>问题归因</th><th>审核人</th><th>完成时间</th><th>训练状态</th><th>操作</th></tr></thead>
+              <tbody id="manual-history-body"><tr><td colspan="9" class="manual-review-loading">正在加载审核记录…</td></tr></tbody>
+            </table>
+          </div>
+          <footer class="manual-review-pagination">
+            <button class="page-button" id="manual-history-previous" type="button">‹</button>
+            <span id="manual-history-page-summary">第 1 / 1 页</span>
+            <button class="page-button" id="manual-history-next" type="button">›</button>
+          </footer>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-region" id="manual-toast-region" aria-live="polite"></div>
+  <script src="{{ url_for('static', path='/manual_reviews.js') }}?v=20260828-manual-review4" defer></script>
+</body>
+</html>

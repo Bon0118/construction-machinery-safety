@@ -1,0 +1,20 @@
+任务：复核安全帽检测。该算法的告警条件是“画面中存在未佩戴安全帽的人员”，不是检测到安全帽就告警。
+
+请先确认画面中存在真实人员，再检查其头部是否清晰可见以及是否正确佩戴安全帽。检测框和 metadata 只是候选信息，不能作为是否佩戴的最终证据。
+
+confirmed 条件：
+- 清晰可见真实人员；
+- 至少一名人员的头部清晰可见；
+- 该人员明确未佩戴安全帽。
+
+rejected 条件：
+- 人员明确正确佩戴安全帽；或者
+- 候选人员/头部属于明确误检；或者
+- 画面中明确不存在人员。
+
+uncertain 条件：
+- 头部过小、模糊、背对镜头或被遮挡；
+- 只能看见人员身体，无法看清头部；
+- 无法区分安全帽、普通帽子、头发或背景。
+
+reason_codes 可使用：person_visible、person_not_visible、bare_head_visible、helmet_visible、head_not_visible、false_person_detection、target_too_small、blurred、occluded、insufficient_evidence。

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>视频任务 · 工程机械伤害检测平台</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v=20260826-algorithm-parameters1">
+</head>
+<body class="tasks-page">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <strong>智能检测平台</strong>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="主导航">
+        <a class="nav-item" href="/channels">
+          <span class="nav-icon">▦</span>
+          <span>视频通道</span>
+        </a>
+        <a class="nav-item active" href="/tasks">
+          <span class="nav-icon">▶</span>
+          <span>视频任务</span>
+        </a>
+        <a class="nav-item" href="/preview">
+          <span class="nav-icon">▣</span>
+          <span>实时预览</span>
+        </a>
+        <a class="nav-item" href="/alarms">
+          <span class="nav-icon">!</span>
+          <span>视频告警</span>
+        </a>
+        <a class="nav-item" href="/manual-reviews">
+          <span class="nav-icon">审</span>
+          <span>人工复核</span>
+        </a>
+        <a class="nav-item" href="/training"><span class="nav-icon">训</span><span>模型训练</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot online"></span>
+        <span>Web 服务运行中</span>
+      </div>
+    </aside>
+
+    <main class="main-content task-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">VIDEO TASKS</p>
+          <h1>视频任务</h1>
+        </div>
+        <button class="button primary" id="add-task-button" type="button"><span>＋</span> 新增任务</button>
+      </header>
+
+      <section class="stage-notice" aria-label="当前阶段说明">
+        <span class="stage-notice-icon">i</span>
+        <div>
+          <strong>视频任务执行器已接入</strong>
+          <p>启动任务后将读取所选视频通道、运行勾选算法并持续生成本地告警；配置上报地址时会同时执行接口上报。</p>
+        </div>
+      </section>
+
+      <section class="panel task-panel">
+        <div class="panel-header">
+          <div>
+            <h2>任务列表</h2>
+            <p>管理视频源、告警上报地址和算法启用状态</p>
+          </div>
+          <div class="panel-actions">
+            <label class="search-box">
+              <span>⌕</span>
+              <input id="task-search" type="search" placeholder="搜索任务编号或视频源">
+            </label>
+            <button class="button secondary" id="refresh-task-button" type="button">刷新</button>
+          </div>
+        </div>
+
+        <div class="task-table-summary">
+          <span>共 <strong id="task-total">0</strong> 个任务</span>
+          <span class="summary-divider"></span>
+          <span class="running-summary"><i></i> 已启动 <strong id="task-running">0</strong></span>
+        </div>
+
+        <div class="table-wrap task-table-wrap">
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th>任务编号</th>
+                <th>视频源</th>
+                <th>上报地址</th>
+                <th>算法配置信息</th>
+                <th>任务状态</th>
+                <th class="task-actions-column">操作</th>
+              </tr>
+            </thead>
+            <tbody id="task-table-body">
+              <tr><td class="loading-cell" colspan="6">正在加载视频任务…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state hidden" id="task-empty-state">
+          <div class="empty-icon">▶</div>
+          <h3>暂无视频任务</h3>
+          <p>选择一个已配置的视频通道，创建第一个机械伤害预警任务。</p>
+          <button class="button primary" id="empty-add-task-button" type="button">新增第一个任务</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="task-drawer-layer hidden" id="task-drawer" role="dialog" aria-modal="true" aria-labelledby="task-drawer-title">
+    <div class="task-drawer-backdrop" data-close-task></div>
+    <aside class="task-drawer-card">
+      <header class="task-drawer-header">
+        <div>
+          <p class="eyebrow">TASK SETTINGS</p>
+          <h2 id="task-drawer-title">新增视频任务</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-task aria-label="关闭">×</button>
+      </header>
+
+      <form id="task-form" class="task-form">
+        <input id="task-id" type="hidden">
+        <div class="task-form-body">
+          <section class="task-form-section">
+            <div class="task-section-heading">
+              <span>01</span>
+              <div><h3>基本配置</h3><p>任务编号、视频来源及告警上报目标</p></div>
+            </div>
+
+            <div class="task-field-grid">
+              <label class="field full-width">
+                <span>任务编号 <b>*</b></span>
+                <input id="task-code" maxlength="100" required placeholder="例如：TASK-20260817-001">
+                <small>可任意填写，仅用于区分不同的视频任务，不参与告警字段生成；编号不能重复。</small>
+              </label>
+
+              <div class="field full-width">
+                <span>视频源 <b>*</b></span>
+                <button class="source-picker-button" id="open-source-drawer" type="button">
+                  <span id="selected-source-text">点击选择已配置的视频通道</span>
+                  <i>选择 ›</i>
+                </button>
+                <small>数据来自“视频通道”模块，点击后从右侧抽屉人工选择。</small>
+              </div>
+
+              <label class="field full-width">
+                <span>上报地址</span>
+                <input id="task-report-url" type="url" placeholder="不填写则告警仅在本机保存">
+                <small>默认读取本机 <code>push_alarm.py</code> 中的地址；清空后告警图片只在本地保存，并可在“视频告警”中查看。</small>
+              </label>
+            </div>
+          </section>
+
+          <section class="task-form-section">
+            <div class="task-section-heading">
+              <span>02</span>
+              <div><h3>算法设置</h3><p>选择算法并为每个算法独立设置告警间隔</p></div>
+            </div>
+            <div class="algorithm-option-list" id="algorithm-option-list">
+              <div class="algorithm-options-loading">正在加载算法列表…</div>
+            </div>
+          </section>
+
+          <section class="task-form-section">
+            <div class="task-section-heading">
+              <span>03</span>
+              <div><h3>4G 节流策略</h3><p>按时段断流、事件唤醒与小目标主码流复核</p></div>
+            </div>
+            <div class="task-field-grid runtime-policy-grid">
+              <label class="switch-field full-width">
+                <span><strong>限定检测时段</strong><small>时段外任务保持“已启动”，但释放共享取流订阅并真正断开视频流。</small></span>
+                <input id="policy-schedule-enabled" type="checkbox"><i></i>
+              </label>
+              <label class="field">
+                <span>开始时间</span>
+                <input id="policy-schedule-start" type="time" value="00:00">
+              </label>
+              <label class="field">
+                <span>结束时间</span>
+                <input id="policy-schedule-end" type="time" value="23:59">
+                <small>开始时间晚于结束时间时按跨天时段处理。</small>
+              </label>
+              <label class="switch-field full-width">
+                <span><strong>摄像头事件唤醒</strong><small>检测时段外收到摄像头事件后临时取流；手动停止的任务不会被事件启动。</small></span>
+                <input id="policy-event-wakeup-enabled" type="checkbox"><i></i>
+              </label>
+              <label class="field full-width">
+                <span>事件唤醒持续时间（秒）</span>
+                <input id="policy-event-wakeup-seconds" type="number" min="10" max="86400" value="300">
+                <small>通用接收接口：<code>POST /api/camera-events/wake</code>，可传 channel_id、camera_id 或 camera_index_code。</small>
+              </label>
+              <label class="switch-field full-width">
+                <span><strong>小目标主码流二次确认</strong><small>子码流发现小目标后临时读取一帧主码流并再次推理；适用于安全帽、烟火等目标算法。</small></span>
+                <input id="policy-main-confirm-enabled" type="checkbox"><i></i>
+              </label>
+              <label class="field">
+                <span>小目标面积占比</span>
+                <input id="policy-small-area-ratio" type="number" min="0.0001" max="0.25" step="0.0001" value="0.02">
+                <small>目标框面积不大于画面面积的该比例时触发复核。</small>
+              </label>
+              <label class="field">
+                <span>主码流确认超时（秒）</span>
+                <input id="policy-confirm-timeout" type="number" min="1" max="60" value="10">
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <div class="form-error hidden" id="task-form-error"></div>
+        <footer class="task-drawer-footer">
+          <button class="button secondary" type="button" data-close-task>取消</button>
+          <button class="button primary" id="save-task-button" type="submit">保存任务</button>
+        </footer>
+      </form>
+    </aside>
+
+    <aside class="source-drawer hidden" id="source-drawer" aria-label="选择视频通道">
+      <header class="source-drawer-header">
+        <div><p class="eyebrow">VIDEO CHANNELS</p><h2>选择视频源</h2></div>
+        <button class="icon-button" id="close-source-drawer" type="button" aria-label="关闭视频源选择">×</button>
+      </header>
+      <div class="source-drawer-search">
+        <label class="search-box"><span>⌕</span><input id="source-search" type="search" placeholder="搜索通道名称或编号"></label>
+      </div>
+      <div class="source-choice-list" id="source-choice-list"></div>
+      <footer class="source-drawer-footer">仅展示已经在“视频通道”模块保存的通道</footer>
+    </aside>
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <script src="{{ url_for('static', path='/tasks.js') }}?v=20260826-algorithm-parameters1" defer></script>
+</body>
+</html>

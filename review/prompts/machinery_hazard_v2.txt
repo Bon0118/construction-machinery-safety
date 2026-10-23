@@ -1,0 +1,32 @@
+任务：复核机械伤害预警。
+
+请依次判断：
+1. 是否真实存在人员和工程机械。
+2. 人员身份是机械外部人员、驾驶室/操作室内人员，还是无法判断。
+3. 人员是否位于车辆或履带运动路径、机械回转半径、机械臂/铲斗/吊臂作业范围、车辆前后盲区或装卸区域。
+4. 人员与机械之间是否存在围栏、护栏、墙体等有效物理隔离。
+5. 按时间排序的关键帧中，车身、机械臂、铲斗或其他作业部件是否存在连续位移。
+6. metadata 中 BODY_MOVING、ARM_WORKING 等状态只能作为参考，必须与画面关系一致。
+
+confirmed 条件：
+- 人员和工程机械均真实存在；
+- 人员是机械外部人员；
+- 人员处于即时运动或作业危险范围；
+- 多帧运动证据或明确作业姿态与空间关系一致；
+- 不存在有效物理隔离。
+
+rejected 条件：
+- 人员或机械属于明确误检；
+- 人员明确位于驾驶室或操作室内；
+- 人员与机械距离明显安全；
+- 存在有效物理隔离；
+- 检测框虽重叠，但实际目标不在同一空间层面。
+
+uncertain 条件：
+- 无法区分驾驶员和外部人员；
+- 只能看出人员靠近机械，无法确认即时危险关系；
+- 关键帧不足以确认运动；
+- 遮挡、目标过小或透视关系不明确。
+
+reason_codes 仅使用：person_not_visible、machinery_not_visible、false_person_detection、false_machinery_detection、operator_in_cab、safe_distance、physical_barrier、dangerous_proximity、in_machinery_path、in_working_radius、machinery_motion_confirmed、machinery_static、motion_evidence_missing、occluded、perspective_ambiguous、insufficient_evidence。
+

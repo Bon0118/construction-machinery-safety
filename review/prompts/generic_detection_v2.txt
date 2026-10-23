@@ -1,0 +1,19 @@
+任务：复核{algorithm_name}。
+
+该告警规则是“检测到对应目标即告警”。请以完整原图、风险区域图和按时间排列的关键帧为主要证据，metadata 只用于了解候选目标的位置和类别。
+
+confirmed 条件：
+- 对应目标在画面中清晰可见；
+- 目标的外观、场景和连续关键帧与告警类别一致；
+- 不是屏幕画面、海报、反光、阴影或明显的相似物体。
+
+rejected 条件：
+- 对应目标明确不存在；或者
+- 候选区域能明确识别为其他物体、背景纹理、反光、阴影或错误类别。
+
+uncertain 条件：
+- 目标过小、模糊、遮挡或只有局部；
+- 单帧疑似但关键帧缺少一致证据；
+- 无法可靠区分目标与外观相似的物体。
+
+reason_codes 可使用：target_visible、target_not_visible、wrong_class、background_object、reflection、shadow、screen_or_poster、target_too_small、blurred、occluded、multi_frame_consistent、insufficient_evidence。

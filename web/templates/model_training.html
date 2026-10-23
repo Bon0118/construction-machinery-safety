@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>模型训练 · 智能检测平台</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v=20260901-model-training3">
+</head>
+<body class="model-training-page">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">AI</div><div><strong>智能检测平台</strong></div></div>
+      <nav class="nav-list" aria-label="主导航">
+        <a class="nav-item" href="/channels"><span class="nav-icon">▦</span><span>视频通道</span></a>
+        <a class="nav-item" href="/tasks"><span class="nav-icon">▶</span><span>视频任务</span></a>
+        <a class="nav-item" href="/preview"><span class="nav-icon">▣</span><span>实时预览</span></a>
+        <a class="nav-item" href="/alarms"><span class="nav-icon">!</span><span>视频告警</span></a>
+        <a class="nav-item" href="/manual-reviews"><span class="nav-icon">审</span><span>人工复核</span></a>
+        <a class="nav-item active" href="/training"><span class="nav-icon">训</span><span>模型训练</span></a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot online"></span><span>Web 服务运行中</span></div>
+    </aside>
+
+    <main class="main-content training-content">
+      <header class="topbar training-topbar">
+        <div><p class="eyebrow">LOCAL YOLOV5 FINE-TUNING</p><h1>模型训练</h1><p>安全帽佩戴检测 · 本地数据集独立训练</p></div>
+        <button class="button secondary" id="training-refresh-environment" type="button">重新检查环境</button>
+      </header>
+
+      <section class="training-flow" aria-label="训练流程">
+        <span class="active"><b>1</b>上传数据集</span><i></i><span><b>2</b>结构校验</span><i></i><span><b>3</b>本机训练</span><i></i><span><b>4</b>评估 best.pt</span><i></i><span><b>5</b>人工决定部署</span>
+      </section>
+
+      <section class="training-environment-grid" aria-label="本机训练环境">
+        <article><span>运行环境</span><strong id="training-env-name">检查中…</strong><small id="training-env-python">-</small></article>
+        <article><span>GPU / CUDA</span><strong id="training-env-gpu">检查中…</strong><small id="training-env-cuda">-</small></article>
+        <article><span>初始权重</span><strong id="training-env-weights">model1_best.pt</strong><small id="training-env-classes">person / head / helmet</small></article>
+        <article><span>环境状态</span><strong id="training-env-status">检查中…</strong><small id="training-env-error">正在验证 YOLOv5 与模型兼容性</small></article>
+      </section>
+
+      <div class="training-layout">
+        <section class="training-card training-config-card">
+          <header><div><p class="eyebrow">CONFIGURATION</p><h2>训练配置</h2></div><span class="training-algorithm-badge">安全帽佩戴检测</span></header>
+          <div class="training-form-grid">
+            <div class="training-upload wide">
+              <input id="training-dataset-file" type="file" accept=".zip,application/zip">
+              <label for="training-dataset-file">选择 ZIP 文件</label>
+              <div><strong id="training-upload-name">尚未选择数据集</strong><small>需包含 data.yaml、train/val 图片和 YOLO 标签，类别顺序固定为 person/head/helmet。</small></div>
+              <button class="button secondary compact" id="training-upload-dataset" type="button">上传并校验</button>
+            </div>
+            <label class="wide">已上传数据集<select id="training-dataset"><option value="">请先上传本地数据集</option></select></label>
+            <label>训练名称<input id="training-run-name" type="text" maxlength="48" placeholder="自动生成"></label>
+            <label>训练尺寸<select id="training-image-size"><option value="512">512</option><option value="640" selected>640</option><option value="768">768</option><option value="960">960</option></select></label>
+            <label>训练轮数<input id="training-epochs" type="number" min="1" max="1000" value="100"></label>
+            <label>批大小<input id="training-batch-size" type="number" min="1" max="64" value="2"></label>
+            <label>数据线程<input id="training-workers" type="number" min="0" max="8" value="2"></label>
+            <label>早停耐心值<input id="training-patience" type="number" min="0" max="300" value="20"></label>
+            <label class="training-switch wide"><input id="training-freeze-backbone" type="checkbox" checked><span><strong>冻结前10层开始微调</strong><small>样本量较小时降低过拟合与显存占用；后续可关闭进行全量微调。</small></span></label>
+          </div>
+          <div class="training-safety-note"><strong>启动条件</strong><p id="training-runtime-hint">正在检查视频任务与训练数据状态…</p></div>
+          <div class="training-actions">
+            <button class="button primary" id="training-start" type="button">启动训练</button>
+          </div>
+        </section>
+
+        <aside class="training-card training-readiness-card">
+          <header><div><p class="eyebrow">LOCAL DATASETS</p><h2>数据集状态</h2></div></header>
+          <div class="training-readiness-main"><strong id="training-dataset-count">0</strong><span>个已上传数据集</span></div>
+          <p id="training-dataset-hint">选择本地 ZIP 文件后，平台会复制、规范化并校验训练数据。</p>
+          <dl class="training-class-counts">
+            <div><dt>person</dt><dd id="training-class-person">0</dd></div>
+            <div><dt>head</dt><dd id="training-class-head">0</dd></div>
+            <div><dt>helmet</dt><dd id="training-class-helmet">0</dd></div>
+          </dl>
+          <div class="training-dataset-summary" id="training-dataset-summary">尚未生成可训练数据集</div>
+        </aside>
+      </div>
+
+      <section class="training-card training-live-card hidden" id="training-live-card">
+        <header>
+          <div><p class="eyebrow">LIVE TRAINING</p><h2 id="training-live-name">当前训练</h2></div>
+          <div class="training-live-actions"><span id="training-live-status">-</span><button class="button danger compact" id="training-stop" type="button">停止训练</button></div>
+        </header>
+        <div class="training-live-grid">
+          <div class="training-epoch-progress"><div><strong id="training-live-epoch">0 / 0</strong><span id="training-live-percent">0%</span></div><div class="training-progress-track"><i id="training-live-progress"></i></div></div>
+          <dl class="training-metrics">
+            <div><dt>Precision</dt><dd id="training-metric-precision">-</dd></div>
+            <div><dt>Recall</dt><dd id="training-metric-recall">-</dd></div>
+            <div><dt>mAP@0.5</dt><dd id="training-metric-map50">-</dd></div>
+            <div><dt>mAP@0.5:0.95</dt><dd id="training-metric-map5095">-</dd></div>
+          </dl>
+          <pre class="training-log" id="training-log">等待训练日志…</pre>
+        </div>
+      </section>
+
+      <section class="training-card training-history-card">
+        <header><div><p class="eyebrow">RUN HISTORY</p><h2>训练记录</h2></div><span>best.pt 仅作为候选模型保存</span></header>
+        <div class="training-table-wrap">
+          <table class="training-table">
+            <thead><tr><th>训练名称</th><th>数据集</th><th>状态</th><th>进度</th><th>mAP@0.5</th><th>开始时间</th><th>输出模型</th><th>操作</th></tr></thead>
+            <tbody id="training-job-body"><tr><td colspan="8">正在加载训练记录…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast-region" id="training-toast-region" aria-live="polite"></div>
+  <script src="{{ url_for('static', path='/model_training.js') }}?v=20260901-model-training3" defer></script>
+</body>
+</html>
